@@ -1,0 +1,111 @@
+DR + SPECTRAL CHECK - portable edition
+=======================================
+Built 2026-08-30. Self-contained: nothing to install.
+
+
+WHAT IT DOES
+Checks albums for dynamic range (DR), brickwall limiting, clipping,
+lossy-transcode "spectral walls", and fake hi-res. Works on a whole
+album folder, an artist folder (each album checked separately), or a
+single track.
+
+
+HOW TO RUN IT
+--------------
+Drag the album folder onto "DR Check - drag files here.bat".
+
+That is the whole procedure. You can drop several albums at once, or
+a whole artist folder - every album inside gets checked separately.
+
+For each album it:
+  - prints the results to the screen
+  - writes a permanent report, dr14.txt, INTO that album's folder
+  - also saves this run's output to last_result.txt next to this
+    file (overwritten each run, so nothing is lost if the window
+    closes early)
+
+If an album folder already has a dr14.txt that this tool did not
+write, the old file is kept as dr14.txt.bak before the new report
+is written.
+
+Want it on the desktop? Right-click the .bat, Send to > Desktop
+(create shortcut). Dragging albums onto the shortcut works the same
+as dragging onto the .bat itself. Do NOT move the .bat out of this
+folder - it needs the files sitting next to it.
+
+
+READING THE RESULT
+--------------------
+One row per track:
+
+  DR         Dynamic range. Higher = more dynamic / less compressed.
+             Below ~8 = loud/compressed. 12+ = genuinely dynamic.
+  Peak/RMS   Loudest point and average level, dB below full scale.
+  PeakInt    The peak as a raw sample number. If it's near-identical
+             on every track, the album went through a limiter.
+  @Ceil/Run  Samples sitting at the peak, and the longest unbroken
+             run of them. A run of 3+ = flat-topped clipping.
+  Cutoff     Where the track's frequency content stops.
+  Wall       How sharply it cuts off there.
+  >22k       (hi-res files only) Energy above 22.05 kHz. Around
+             -60 dB or lower = upsampled, not real hi-res.
+
+Below the table, a Diagnostics section says in plain words whether
+the album is limited, clipped, transcoded, or fake hi-res - that's
+the part to read first.
+
+
+WHAT IS IN THIS FOLDER
+-----------------------
+  DR Check - drag files here.bat   what you drag albums onto
+  dr_spectral_check.py             the checker itself
+  python\                          bundled Python 3.13 + numpy
+  bin\                             bundled ffmpeg / ffprobe
+  HOW TO USE.txt                   this file
+  last_result.txt                  appears after the first run
+
+Nothing here depends on anything installed on the machine. Copy the
+folder anywhere - USB stick, any drive letter, any PC running 64-bit
+Windows - and it runs from wherever it sits. It does not touch the
+registry, does not need admin rights, and does not interfere with any
+Python already installed on the machine.
+
+Handles flac / wav / m4a / ape / wv / aiff / ogg.
+
+
+IF SOMETHING GOES WRONG
+------------------------
+"the bundled Python is missing" - you copied only the .bat instead of
+the whole folder. Copy the entire folder across.
+
+Windows SmartScreen warning on first run - because the folder came
+from another PC. Click "More info" then "Run anyway", or right-click
+the .bat > Properties > tick Unblock.
+
+Any other error - it will be sitting in last_result.txt next to this
+file, which is the useful thing to send on when asking about it.
+
+SPECTROGRAMS - THE PICTURE VERSION
+------------------------------------
+If an album trips the transcode or fake-hi-res checks, the tool also
+renders a spectrogram PNG for every track into a "spectrograms"
+subfolder inside that album. Clean albums get none, so anything with
+a spectrograms folder is by definition one to look at.
+
+Open the images and look at the TOP EDGE:
+
+  - content fading out naturally near the top   = genuine lossless
+  - hard flat shelf with black above it         = lossy at some point
+        ~16 kHz = 128k mp3,  ~19 kHz = 320k,  ~20.5 kHz = V0/AAC
+  - shelf on SOME tracks only                   = those tracks are the
+                                                  bad ones, not the album
+  - sparse speckle or holes near the top        = low bitrate
+  - flat featureless block above 22 kHz on a
+    hi-res file                                 = upsampled, padded with
+                                                  noise, not real hi-res
+
+To force pictures for an album that passed, or to skip them entirely:
+
+  python dr_spectral_check.py --spectrograms "album folder"
+  python dr_spectral_check.py --no-spectrograms "album folder"
+
